@@ -36,9 +36,15 @@ USERNAME_TO_PASSWORD_MAPPER = {
 
 @csrf_exempt
 def process_authorization_view(request):
+    mapper = USERNAME_TO_PASSWORD_MAPPER
+
     if request.method == 'POST':
         data = json.loads(request.body)
-        # код писать тут
+        data_username, data_password = data.get('username'), data.get('password')
+        if data_username and data_password and mapper.get(data_username) == data_password:
+            return JsonResponse(data={}, status=200)
+        else:
+            return JsonResponse(data={}, status=403)
     else:
         return HttpResponseNotAllowed(permitted_methods=['POST'])
 
