@@ -1,9 +1,10 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpRequest
 
 
 """
 Вьюха get_products_view должна возвращать список продуктов, если обратиться по адресу http://127.0.0.1:8000/products/
-Но в некоторых ситуациях, там хотелось бы получать продукты только одного типа, для этого можно использовать GET параметры.
+Но в некоторых ситуациях, там хотелось бы получать продукты только одного типа,
+для этого можно использовать GET параметры.
 Например по адресу http://127.0.0.1:8000/products/?type=books получить только продукты с типом книнги
 
 Задания:
@@ -36,10 +37,10 @@ PRODUCTS = [
 ]
 
 
-def get_products_view(request):
+def get_products_view(request: HttpRequest) -> HttpResponse:
     products = []
     target_type = request.GET.get('type')
-    
+
     if not target_type:
         products = PRODUCTS
     else:

@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 
 """
 У нас есть вьюха welcome_user_view, в которой должно формироваться приветствие, а формируется прощание.
@@ -9,6 +9,6 @@ from django.http import HttpResponse
 """
 
 
-def welcome_user_view(request):
+def welcome_user_view(request: HttpRequest) -> HttpResponse:
     welcome_message = 'Greetings, user!'
     return HttpResponse(welcome_message)

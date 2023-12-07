@@ -1,8 +1,9 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest, HttpResponse
 
 
 """
-Вьюха get_user_info_view возвращает информацию о юзере по его айдишнику. Если айдишника нет - возвращает собщение об ошибке
+Вьюха get_user_info_view возвращает информацию о юзере по его айдишнику.
+Если айдишника нет - возвращает собщение об ошибке
 
 Задания:
     1. Добавьте путь в файле urls.py, чтобы при открытии http://127.0.0.1:8000/user-info/тут айдишник юзера/
@@ -17,7 +18,7 @@ USER_ID_TO_USER_INFO_MAPPER = {
 }
 
 
-def get_user_info_view(request, user_id: int):
+def get_user_info_view(request: HttpRequest, user_id: int) -> HttpResponse:
     if user_id in USER_ID_TO_USER_INFO_MAPPER:
         return JsonResponse(data=USER_ID_TO_USER_INFO_MAPPER[user_id])
     else:

@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 
 
 """
@@ -14,7 +14,7 @@ from django.http import HttpResponse
 """
 
 
-def greet_user_in_different_languages_view(request, name: str, language: str):
+def greet_user_in_different_languages_view(request: HttpRequest, name: str, language: str) -> HttpResponse:
     titled_name = name.title()
 
     if language == 'ru':
