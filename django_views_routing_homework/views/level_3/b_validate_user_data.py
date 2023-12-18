@@ -18,49 +18,51 @@
 Когда будете писать код, не забывайте о читаемости, поддерживаемости и модульности.
 """
 
-from django.http import HttpResponse, HttpRequest, JsonResponse, HttpResponseBadRequest
+
+import json
 from typing import Mapping
+from django.http import HttpResponse, HttpRequest, JsonResponse, HttpResponseBadRequest
 
 
-def check_data_structure(user_data: Mapping[str, str]) -> bool:
-    check_set = {'full_name', 'email', 'registered_from', 'age'}
-    keys_set = set(user_data.keys())
-    return keys_set <= check_set and check_set - keys_set in [set(), {'age'}]
+def check_json_structure(user_data: Mapping[str, str]) -> bool:
+    check_keys_set = {'full_name', 'email', 'registered_from', 'age'}
+    user_keys_set = set(user_data.keys())
+    return user_keys_set <= check_keys_set and check_keys_set - user_keys_set in [set(), {'age'}]
 
 
 def check_full_name(user_data: Mapping[str, str]) -> bool:
-    user_full_name = user_data.get('full_name', '')
+    user_full_name = str(user_data.get('full_name', ''))
     return 5 <= len(user_full_name) <= 256
 
 
 def check_email(user_data: Mapping[str, str]) -> bool:
-    user_email = user_data.get('email', '')
+    user_email = str(user_data.get('email', ''))
     at_sign_check = user_email.count('@') == 1 and user_email.find('@') >= 0
     dot_check = user_email.count('.')
     return all([at_sign_check, dot_check])
 
 
 def check_registered_from(user_data: Mapping[str, str]) -> bool:
-    user_registered_from = user_data.get('registered_from', '')
+    user_registered_from = str(user_data.get('registered_from', ''))
     return user_registered_from in ['website', 'mobile_app']
 
 
 def check_age(user_data: Mapping[str, str]) -> bool:
-    user_age = user_data.get('age', None)
-    if user_age is None:
-        return len(user_data) == 3
-    else:
-        return user_age.isdigit()
+    user_age_raw = user_data.get('age', None)
+    return True if user_age_raw is None else str(user_age_raw).isdigit()
 
 
 def validate_user_data_view(request: HttpRequest) -> HttpResponse:
-    user_data = request.POST
-    if not check_data_structure(user_data):
+    try:
+        user_data_json = json.loads(request.body)
+    except json.decoder.JSONDecodeError:
+        user_data_json = {}
+    if not check_json_structure(user_data_json):
         return HttpResponseBadRequest('Bad data structure found')
     is_user_data_valid = all([
-        check_full_name(user_data),
-        check_email(user_data),
-        check_registered_from(user_data),
-        check_age(user_data),
+        check_full_name(user_data_json),
+        check_email(user_data_json),
+        check_registered_from(user_data_json),
+        check_age(user_data_json),
     ])
     return JsonResponse({'is_valid': is_user_data_valid})
