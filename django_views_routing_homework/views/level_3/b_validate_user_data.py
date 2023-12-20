@@ -20,36 +20,42 @@
 
 
 import json
-from typing import Mapping
+from typing import Mapping, Any
 from django.http import HttpResponse, HttpRequest, JsonResponse, HttpResponseBadRequest
 
 
-def check_json_structure(user_data: Mapping[str, str]) -> bool:
+def check_keys_structure(user_keys_set: set[str]) -> bool:
     check_keys_set = {'full_name', 'email', 'registered_from', 'age'}
-    user_keys_set = set(user_data.keys())
     return user_keys_set <= check_keys_set and check_keys_set - user_keys_set in [set(), {'age'}]
 
 
-def check_full_name(user_data: Mapping[str, str]) -> bool:
-    user_full_name = str(user_data.get('full_name', ''))
-    return 5 <= len(user_full_name) <= 256
+def check_json_values_types(user_data_json: Mapping[str, Any]) -> bool:
+    try:
+        for key in ['full_name', 'email', 'registered_from']:
+            assert isinstance(user_data_json[key], str)
+        age = user_data_json.get('age')
+        assert age is None or isinstance(age, int)
+        return True
+    except AssertionError:
+        return False
 
 
-def check_email(user_data: Mapping[str, str]) -> bool:
-    user_email = str(user_data.get('email', ''))
-    at_sign_check = user_email.count('@') == 1 and user_email.find('@') >= 0
-    dot_check = user_email.count('.')
+def check_full_name(full_name_str: str) -> bool:
+    return 5 <= len(full_name_str) <= 256
+
+
+def check_email(email_str: str) -> bool:
+    at_sign_check = email_str.count('@') == 1 and 1 <= email_str.find('@') < (len(email_str) - 1)
+    dot_check = email_str.count('.') and 1 <= email_str.find('.') < (len(email_str) - 1)
     return all([at_sign_check, dot_check])
 
 
-def check_registered_from(user_data: Mapping[str, str]) -> bool:
-    user_registered_from = str(user_data.get('registered_from', ''))
-    return user_registered_from in ['website', 'mobile_app']
+def check_registered_from(registered_from_str: str) -> bool:
+    return registered_from_str in ['website', 'mobile_app']
 
 
-def check_age(user_data: Mapping[str, str]) -> bool:
-    user_age_raw = user_data.get('age', None)
-    return True if user_age_raw is None else str(user_age_raw).isdigit()
+def check_age(age: int) -> bool:
+    return age > 0
 
 
 def validate_user_data_view(request: HttpRequest) -> HttpResponse:
@@ -57,12 +63,17 @@ def validate_user_data_view(request: HttpRequest) -> HttpResponse:
         user_data_json = json.loads(request.body)
     except json.decoder.JSONDecodeError:
         user_data_json = {}
-    if not check_json_structure(user_data_json):
+
+    if not check_keys_structure(set(user_data_json.keys())):
         return HttpResponseBadRequest('Bad data structure found')
-    is_user_data_valid = all([
-        check_full_name(user_data_json),
-        check_email(user_data_json),
-        check_registered_from(user_data_json),
-        check_age(user_data_json),
-    ])
+
+    if not check_json_values_types(user_data_json):
+        is_user_data_valid = False
+    else:
+        is_user_data_valid = all([
+            check_full_name(user_data_json['full_name']),
+            check_email(user_data_json['email']),
+            check_registered_from(user_data_json['registered_from']),
+            check_age(user_data_json.get('age', True)),
+        ])
     return JsonResponse({'is_valid': is_user_data_valid})
